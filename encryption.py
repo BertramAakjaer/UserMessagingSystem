@@ -74,9 +74,9 @@ def encrypt_with_both(key, plaintext):
     
     
     print(f"Plaintext bytes length: {len(plaintext.encode('utf-8'))}")
-    print(f"-\tAES-CBC Ciphertext length : {ctr_size} bytes")
+    print(f"-\tAES-CBC Ciphertext length : {cbc_size} bytes")
     print(f"\tTime taken: {time_cbc:.6f} seconds")
-    print(f"-\tAES-CTR Ciphertext length : {cbc_size} bytes")
+    print(f"-\tAES-CTR Ciphertext length : {ctr_size} bytes")
     print(f"\tTime taken: {time_ctr:.6f} seconds")
     print("-" * 40 + "\n")
     
