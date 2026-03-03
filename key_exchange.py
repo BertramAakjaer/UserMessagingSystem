@@ -3,38 +3,35 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 import base64
 
+# Padding used to make RSA harder to break
+RSA_PADDING = rsa_padding.PSS(
+    mgf=rsa_padding.MGF1(hashes.SHA256()),
+    salt_length=rsa_padding.PSS.MAX_LENGTH
+)
+
+
 # Base64 for storing to the json file
-def b64_encode(data: bytes) -> str:
+def b64_encode(data):
     return base64.b64encode(data).decode('utf-8')
 
-def b64_decode(data_str: str) -> bytes:
+def b64_decode(data_str):
     return base64.b64decode(data_str.encode('utf-8'))
 
 
 #  RSA Keys
 def generate_rsa_keypair():
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    public_key = private_key.public_key()
-    return private_key, public_key
+    return private_key, private_key.public_key() # priv, pub
 
-def sign_data(private_key, data: bytes) -> bytes:
-    signature = private_key.sign(
-        data,
-        rsa_padding.PSS(mgf=rsa_padding.MGF1(hashes.SHA256()), salt_length=rsa_padding.PSS.MAX_LENGTH),
-        hashes.SHA256()
-    )
+def sign_data(priv_key, data):
+    signature = priv_key.sign(data, RSA_PADDING, hashes.SHA256())
     return signature
 
-def verify_signature(public_key, signature: bytes, data: bytes) -> bool:
+def verify_signature(pub_key, signature, data):
     try:
-        public_key.verify(
-            signature,
-            data,
-            rsa_padding.PSS(mgf=rsa_padding.MGF1(hashes.SHA256()), salt_length=rsa_padding.PSS.MAX_LENGTH),
-            hashes.SHA256()
-        )
+        pub_key.verify(signature, data, RSA_PADDING, hashes.SHA256())
         return True
-    except Exception:
+    except:
         return False
 
 
@@ -43,11 +40,10 @@ def verify_signature(public_key, signature: bytes, data: bytes) -> bool:
 
 def generate_dh_keypair():
     private_key = ec.generate_private_key(ec.SECP384R1())
-    public_key = private_key.public_key()
-    return private_key, public_key
+    return private_key, private_key.public_key()
 
-def derive_shared_aes_key(my_private_dh, peer_public_dh) -> bytes:
-    shared_secret = my_private_dh.exchange(ec.ECDH(), peer_public_dh)
+def derive_shared_aes_key(private_dh, public_dh) -> bytes:
+    shared_secret = private_dh.exchange(ec.ECDH(), public_dh)
     
     derived_key = HKDF(
         algorithm=hashes.SHA256(),
